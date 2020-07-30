@@ -12,8 +12,8 @@ peSectionsTexts = ''
 fileText = ''
 def encode(string):
     sum = 0
-    for char in string:
-        sum += (ord(str(char))) 
+    for i in range(len(string)):
+        sum += (ord(str(string[i]))) #*i #TRAINED IS COMMENTED
     return sum
 
 def getPEHeaders():
@@ -33,20 +33,14 @@ def getPEHeaders():
         peSectionsTexts[i] = peSectionsTexts[i].split('\n')
         for j in range(len(peSectionsTexts[i])):
             peSectionsTexts[i][j] = peSectionsTexts[i][j].split(':')
-            # if len(peSectionsTexts[i][j]) == 4 and peSectionsTexts[i][j][0] not in ['Flags:', 'Entropy:']:
-            #     peSectionsTexts[i][j].pop(0)
-            #     peSectionsTexts[i][j].pop(0)
             try:
                 peSectionsTexts[i][j][-1] = str(int(peSectionsTexts[i][j][-1] ,16))
             except ValueError:
                 peSectionsTexts[i][j][-1] = str(encode(peSectionsTexts[i][j][-1]))
-            # peSectionsTexts[i][j][0] = peSectionsTexts[i][j][0].split(':')[0]
         peSectionsTexts[i].pop(-1)
         peSectionsTexts[i].pop(-1)
         peSectionsTexts[i].pop(-1)
         peSectionsTexts[i].pop(-1)
-        # peSectionsTexts[i][-1].pop(-1)
-        # peSectionsTexts[i][-1].pop(-1)
         peSectionsTexts[i].pop(-2)
 
 def getPEFileHeader():
