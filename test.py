@@ -6,126 +6,144 @@ benign = 0
 malignant = 0
 total = 0
 writeFile = open("Temp.txt", 'w')
-peSectionsDict = OrderedDict()
 optionalHeaderDict = OrderedDict()
+peSectionsTexts = ''
 
+fileText = ''
+def encode(string):
+    sum = 0
+    for char in string:
+        sum += (ord(str(char))) 
+    return sum
 
-class BytesIntEncoder:
-#LIFTED FROM SACKOVERFLOW
-    def __init__(self, chars: bytes = (string.ascii_letters + string.digits).encode()):
-        num_chars = len(chars)
-        translation = ''.join(chr(i) for i in range(1, num_chars + 1)).encode()
-        self._translation_table = bytes.maketrans(chars, translation)
-        self._reverse_translation_table = bytes.maketrans(translation, chars)
-        self._num_bits_per_char = (num_chars + 1).bit_length()
-
-    def encode(self, chars: bytes) -> int:
-        num_bits_per_char = self._num_bits_per_char
-        output, bit_idx = 0, 0
-        for chr_idx in chars.translate(self._translation_table):
-            output |= (chr_idx << bit_idx)
-            bit_idx += num_bits_per_char
-        return output
-
-    def decode(self, i: int) -> bytes:
-        maxint = (2 ** self._num_bits_per_char) - 1
-        output = bytes(((i >> offset) & maxint) for offset in range(0, i.bit_length(), self._num_bits_per_char))
-        return output.translate(self._reverse_translation_table)
-
-
-encoder = BytesIntEncoder()
-def executeStuff():
-    global total, sectionCounter, peSectionsDict, hashName
-    total += 1
-    print(total)
-    f = open(filepath + '/Structure_Info.txt', 'r', errors='replace')
-    hashName = filepath.split('/')[-1].split('\\')[-1]
-    fileText = f.read()
+def getPEHeaders():
+    global peSectionsTexts, fileText
+    toRemove = []
     peFeatures = fileText.split('----------PE Sections----------')
     peFeatures = peFeatures[1].split('----------Directories----------')[0]
     peSectionsTexts = peFeatures.split('[IMAGE_SECTION_HEADER]')
-    peSectionsTexts.pop(0)
+    for i in range(len(peSectionsTexts)):
+        peSectionsTexts[i] = peSectionsTexts[i].strip()
+        if peSectionsTexts[i] in [' ','']:
+            toRemove.append(i)
+    for element in toRemove:
+        peSectionsTexts.pop(element)
+    toRemove = []
+    for i in range(len(peSectionsTexts)):
+        peSectionsTexts[i] = peSectionsTexts[i].split('\n')
+        for j in range(len(peSectionsTexts[i])):
+            peSectionsTexts[i][j] = peSectionsTexts[i][j].split(':')
+            # if len(peSectionsTexts[i][j]) == 4 and peSectionsTexts[i][j][0] not in ['Flags:', 'Entropy:']:
+            #     peSectionsTexts[i][j].pop(0)
+            #     peSectionsTexts[i][j].pop(0)
+            try:
+                peSectionsTexts[i][j][-1] = str(int(peSectionsTexts[i][j][-1] ,16))
+            except ValueError:
+                peSectionsTexts[i][j][-1] = str(encode(peSectionsTexts[i][j][-1]))
+            # peSectionsTexts[i][j][0] = peSectionsTexts[i][j][0].split(':')[0]
+        peSectionsTexts[i].pop(-1)
+        peSectionsTexts[i].pop(-1)
+        peSectionsTexts[i].pop(-1)
+        peSectionsTexts[i].pop(-1)
+        # peSectionsTexts[i][-1].pop(-1)
+        # peSectionsTexts[i][-1].pop(-1)
+        peSectionsTexts[i].pop(-2)
 
+def getPEFileHeader():
+    global peFileTexts, fileText
+    toRemove = []
+    peFileFeatures = fileText.split('----------FILE_HEADER----------')
+    peFileFeatures = peFileFeatures[1].split('----------OPTIONAL_HEADER----------')[0]
+    peFileTexts = peFileFeatures.split('[IMAGE_FILE_HEADER]')
+    for i in range(len(peFileTexts)):
+        peFileTexts[i] = peFileTexts[i].strip()
+        if peFileTexts[i] in [' ','']:
+            toRemove.append(i)
+    for element in toRemove:
+        peFileTexts.pop(element)
+    toRemove = []
+    for i in range(len(peFileTexts)):
+        peFileTexts[i] = peFileTexts[i].split('\n')
+        for j in range(len(peFileTexts[i])):
+            peFileTexts[i][j] = peFileTexts[i][j].split()
+            if len(peFileTexts[i][j]) == 4 and peFileTexts[i][j][0] not in ['Flags:', 'Entropy:']:
+                peFileTexts[i][j].pop(0)
+                peFileTexts[i][j].pop(0)
+                try:
+                    peFileTexts[i][j][-1] = str(int(peFileTexts[i][j][-1] ,16))
+                except ValueError:
+                    peFileTexts[i][j][-1] = str(encode(peFileTexts[i][j][-1]))
+            peFileTexts[i][j][0] = peFileTexts[i][j][0].split(':')[0]
+        peFileTexts[i].pop(-1)
+        peFileTexts[i].pop(2)
+
+def getOptionalHeader():
+    global optionalFileText, fileText
+    toRemove = []
+    optionalFileFeatures = fileText.split('----------OPTIONAL_HEADER----------')
+    optionalFileFeatures = optionalFileFeatures[1].split('----------PE Sections----------')[0]
+    optionalFileText = optionalFileFeatures.split('[IMAGE_OPTIONAL_HEADER]')
+    for i in range(len(optionalFileText)):
+        optionalFileText[i] = optionalFileText[i].strip()
+        if optionalFileText[i] in [' ','']:
+            toRemove.append(i)
+    for element in toRemove:
+        optionalFileText.pop(element)
+    toRemove = []
+    for i in range(len(optionalFileText)):
+        optionalFileText[i] = optionalFileText[i].split('\n')
+        for j in range(len(optionalFileText[i])):
+            optionalFileText[i][j] = optionalFileText[i][j].split()
+            if len(optionalFileText[i][j]) == 4 and optionalFileText[i][j][0] not in ['Flags:', 'Entropy:']:
+                optionalFileText[i][j].pop(0)
+                optionalFileText[i][j].pop(0)
+                try:
+                    optionalFileText[i][j][-1] = str(int(optionalFileText[i][j][-1] ,16))
+                except ValueError:
+                    optionalFileText[i][j][-1] = str(encode(optionalFileText[i][j][-1]))
+            optionalFileText[i][j][0] = optionalFileText[i][j][0].split(':')[0]
+        optionalFileText[i].pop(-1)
+
+
+def executeStuff():
+    global total, sectionCounter, peSectionsDict, hashName, fileText, peFileTexts, finalOut
+    total += 1
+    if total%25 == 0:
+        print(total)
+    f = open(filepath + '/Structure_Info.txt', 'r', errors='replace')
+    hashName = filepath.split('/')[-1].split('\\')[-1]
+    fileText = f.read()
+    
+    getPEHeaders()
+    getPEFileHeader()
+    getOptionalHeader()
+    # for i in range(len(peFileTexts)):
+    finalOut.write(hashName + ',')
+    for section in peFileTexts:
+        for item in section:
+            finalOut.write(item[-1] + ',')
     for section in peSectionsTexts:
-        tempDict = OrderedDict()
-        sectionCounter += 1
-        # peSections.append( Section(section, hashName))
-        templines = section.split('\n')
-        lines = []
-        for line in templines:
-            if line != '':
-                lines.append(line)
-        templines = lines
-        lines = []
-        for line in templines:
-            templine = line.split(' ')
-            line = []
-            for element in templine:
-                if(element not in [' ', '']):
-                    line.append(element)
-            lines.append(line)
-        for line in lines:
-            if(line[0][0:2] == '0x'):
-                line.pop(0)
-                line.pop(0)
-                tempDict[line[0][:-1]] = line[-1]
-
-        tempDict['Name'] = encoder.encode(tempDict['Name'].encode())
-        peSectionsDict[sectionCounter] = tempDict
-    writeFile.write(str(peSectionsDict) + '\n')
-
-    optionalHeader = fileText.split('----------OPTIONAL_HEADER----------')
-    optionalHeader = optionalHeader[1].split(
-        '----------PE Sections----------')[0]
-    optionalHeader = optionalHeader.split('\n')
-    optionalHeader.pop(0)
-    optionalHeader.pop(0)
-    optionalHeader.pop(0)
-    for line in optionalHeader:
-        templine = line.split(' ')
-        line = []
-        for i in range(len(templine)):
-            if templine[i] not in [' ', '']:
-                line.append(templine[i])
-        if len(line) < 2 or line[0][0:3] == 'Dll':
-            continue
-        line.pop(0)
-        line.pop(0)
-        line = ''.join(line)
-        splitLine = line.split(':')
-        if len(line) < 2:
-            continue
-        optionalHeaderDict[splitLine[0]] = splitLine[1]
-    writeFile.write(str(optionalHeaderDict) + '\n')
-    sectionCounter = 0
-    # checkMalware()
-
-    finalOut.write(hashName + ', ')
-    for item in optionalHeaderDict:
-        if str(optionalHeaderDict[item])[0:2] == '0x':
-            finalOut.write(str(int(optionalHeaderDict[item], 16)) + ', ')
-        else:
-            finalOut.write(str(optionalHeaderDict[item]) + ', ')
-    finalOut.write(', ')
-    for item in peSectionsDict:
-        for element in peSectionsDict[item]:
-            if str(peSectionsDict[item][element])[0:2] == '0x':
-                finalOut.write(
-                    str(int(peSectionsDict[item][element], 16)) + ', ')
-            else:
-                finalOut.write(str(peSectionsDict[item][element]) + ', ')
-        finalOut.write(', ')
+        for item in section:
+            finalOut.write(item[-1] + ',')
+    for section in optionalFileText:
+        for item in section:
+            finalOut.write(item[-1] + ',')
+        finalOut.write(',')
     finalOut.write('\n')
-    peSectionsDict = OrderedDict()
-
     f.close()
 
 
-output = open('OP.csv', 'w')
-sectionCounter = 0
-finalOut = open('Backdoor.csv', 'w')
-for filepath in glob.iglob('Static_Analysis_Data/Malware/Backdoor/*'):
+malwareType = 'Benign'
+path = 'Static_Analysis_Data/' + malwareType  + '/*'
+print(path)
+# path = 'Static_Analysis_Data/+' + 'Malware/' + malwareType +'/*'
+filesWithError = open('FilesWithError'+malwareType, 'w')
+finalOut = open(malwareType + '.csv', 'w')
+for filepath in glob.iglob(path):
+    # executeStuff()
+    # break
     try:
         executeStuff()
     except:
-        continue
+      filesWithError.write(filepath + '\n')
+      continue
