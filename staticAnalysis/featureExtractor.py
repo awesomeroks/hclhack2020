@@ -116,22 +116,18 @@ def executeStuff():
     for section in peFileTexts:
         for item in section:
             finalOut.write(item[-1] + ',')
-    finalOut.write(',')
     for section in optionalFileText:
         for item in section:
             finalOut.write(item[-1] + ',')
     for section in peSectionsTexts:
         for item in section:
             finalOut.write(item[-1] + ',')
-        finalOut.write(',')
-    
-        
     finalOut.write('\n')
     f.close()
 
 
 malwareType = 'Benign'
-path = 'Static_Analysis_Data/' + malwareType  + '/*'
+path = 'E:/Google Drive/Non Academic/HCL Hack 2020/hclhack2020/Static_Analysis_Data/Benign/*'
 filesWithError = open('FilesWithError'+malwareType, 'w')
 finalOut = open(malwareType + '.csv', 'w')
 print('RUNNING ', 'BENIGN', path)
