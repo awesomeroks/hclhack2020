@@ -123,13 +123,14 @@ def executeStuff():
         for item in section:
             finalOut.write(item[-1] + ',')
     finalOut.write(',')
+    for section in optionalFileText:
+        for item in section:
+            finalOut.write(item[-1] + ',')
     for section in peSectionsTexts:
         for item in section:
             finalOut.write(item[-1] + ',')
         finalOut.write(',')
-    for section in optionalFileText:
-        for item in section:
-            finalOut.write(item[-1] + ',')
+    
         
     finalOut.write('\n')
     f.close()
@@ -141,27 +142,26 @@ filesWithError = open('FilesWithError'+malwareType, 'w')
 finalOut = open(malwareType + '.csv', 'w')
 print('RUNNING ', 'BENIGN', path)
 for filepath in glob.iglob(path):
-        try:
-            executeStuff()
-        except:
-            filesWithError.write(filepath + '\n')
-        continue
-types = ['Virus', 'Trojan','TrojanDownloader', 'TrojanDropper', 'Worm', 'Backdoor']
+    try:
+        executeStuff()
+    except:
+        filesWithError.write(filepath + '\n')
+    continue
+filesWithError.close()
+finalOut.close()
+types = ['Virus','Trojan','TrojanDownloader', 'TrojanDropper', 'Worm', 'Backdoor']
 for malwaretype in types:
     path = 'Static_Analysis_Data/' + 'Malware/' + malwaretype +'/*'
     total = 0
     print('RUNNING ', malwaretype, path)
-    filesWithError.close()
-    finalOut.close()
     filesWithError = open('FilesWithError'+malwaretype, 'w')
     finalOut = open(malwaretype + '.csv', 'w')
-    
     for filepath in glob.iglob(path):
-        # executeStuff()
-        # break
         try:
             executeStuff()
         except:
             filesWithError.write(filepath + '\n')
+            print("ERROR")
         continue
-    
+    filesWithError.close()
+    finalOut.close()
