@@ -108,7 +108,7 @@ def getOptionalHeader():
 def executeStuff():
     global total, sectionCounter, peSectionsDict, hashName, fileText, peFileTexts, finalOut
     total += 1
-    if total%25 == 0:
+    if total%100 == 0:
         print(total)
     f = open(filepath + '/Structure_Info.txt', 'r', errors='replace')
     hashName = filepath.split('/')[-1].split('\\')[-1]
@@ -122,28 +122,46 @@ def executeStuff():
     for section in peFileTexts:
         for item in section:
             finalOut.write(item[-1] + ',')
+    finalOut.write(',')
     for section in peSectionsTexts:
         for item in section:
             finalOut.write(item[-1] + ',')
+        finalOut.write(',')
     for section in optionalFileText:
         for item in section:
             finalOut.write(item[-1] + ',')
-        finalOut.write(',')
+        
     finalOut.write('\n')
     f.close()
 
 
 malwareType = 'Benign'
 path = 'Static_Analysis_Data/' + malwareType  + '/*'
-print(path)
-# path = 'Static_Analysis_Data/+' + 'Malware/' + malwareType +'/*'
 filesWithError = open('FilesWithError'+malwareType, 'w')
 finalOut = open(malwareType + '.csv', 'w')
+print('RUNNING ', 'BENIGN', path)
 for filepath in glob.iglob(path):
-    # executeStuff()
-    # break
-    try:
-        executeStuff()
-    except:
-      filesWithError.write(filepath + '\n')
-      continue
+        try:
+            executeStuff()
+        except:
+            filesWithError.write(filepath + '\n')
+        continue
+types = ['Virus', 'Trojan','TrojanDownloader', 'TrojanDropper', 'Worm', 'Backdoor']
+for malwaretype in types:
+    path = 'Static_Analysis_Data/' + 'Malware/' + malwaretype +'/*'
+    total = 0
+    print('RUNNING ', malwaretype, path)
+    filesWithError.close()
+    finalOut.close()
+    filesWithError = open('FilesWithError'+malwaretype, 'w')
+    finalOut = open(malwaretype + '.csv', 'w')
+    
+    for filepath in glob.iglob(path):
+        # executeStuff()
+        # break
+        try:
+            executeStuff()
+        except:
+            filesWithError.write(filepath + '\n')
+        continue
+    
