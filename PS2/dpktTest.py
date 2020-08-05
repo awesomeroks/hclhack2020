@@ -26,12 +26,14 @@ def executeUpdates(key2, protocol, packetSize, timestamp, inside ):
     
 
     frequencyDict[key2]['protocol'] = (frequencyDict[key2]['protocol']*length + protocol)/(length + 1) # Protocol average
-    frequencyDict[key2]['packetSize'] = ( frequencyDict[key2]['packetSize'] *length + float(packetSize) )/(length + 1) #packetSize
+    
     frequencyDict[key2]['avgTimeInterval'] =  (frequencyDict[key2]['avgTimeInterval']*length + (timestamp - frequencyDict[key2]['prevTimeStamp']))/(length + 1) #avgTimeInterval
     frequencyDict[key2]['prevTimeStamp'] = timestamp
     if inside:
+        frequencyDict[key2]['packetSizeFwd'] = ( frequencyDict[key2]['packetSizeFwd'] *length + float(packetSize) )/(length + 1) #packetSize
         frequencyDict[key2]['numberPacketsIn'] += 1 #increment length
     else:
+        frequencyDict[key2]['packetSizeBwd'] = ( frequencyDict[key2]['packetSizeBwd'] *length + float(packetSize) )/(length + 1) #packetSize
         frequencyDict[key2]['numberPacketsOut'] += 1 #increment length
 
 def extractFeatures(timestamp, buf):
@@ -58,10 +60,12 @@ def extractFeatures(timestamp, buf):
         frequencyDict[key1] = {
             'numberPacketsIn':1,
             'numberPacketsOut':0,
-            'packetSize':float(packetSize),
+            'packetSizeFwd':float(packetSize),
+            'packetSizeBwd':float(packetSize),
             'protocol':protocol,
             'avgTimeInterval':0,
             'prevTimeStamp':timestamp,
+            'startTime' : timestamp
             } #NumberPacketsIn, NumberPacketsOut, Payload Length,  protocol, avgTimeInterval, previousTime
     # if counter == 0:
     #     prevTime = float(timestamp)
@@ -99,13 +103,17 @@ def readFile(filePath, fileToWrite):
     #NumberPacketsIn, NumberPacketsOut, Payload Length,  protocol, avgTimeInterval, previousTime
     print(len(frequencyDict))
     for key in frequencyDict.keys():
-        toWrite = label + ',' + fileName +',' + str(key) +',' +  str(frequencyDict[key]['numberPacketsIn']) + ',' + str(frequencyDict[key]['numberPacketsOut']) + ',' +  str(frequencyDict[key]['packetSize']) + ',' + str(frequencyDict[key]['protocol']) +',' + str(frequencyDict[key]['avgTimeInterval']) + '\n'
+        time = frequencyDict[key]['prevTimeStamp'] - frequencyDict[key]['startTime']
+        if time == 0:
+            time = 1
+        packetSize = (frequencyDict[key]['packetSizeFwd']*frequencyDict[key]['numberPacketsIn'] + frequencyDict[key]['packetSizeBwd']*frequencyDict[key]['numberPacketsOut'])/(frequencyDict[key]['numberPacketsIn'] + frequencyDict[key]['numberPacketsOut'])
+        toWrite = label + ',' + fileName +',' + str(key) +',' +  str(frequencyDict[key]['numberPacketsIn']) + ',' + str(frequencyDict[key]['numberPacketsOut']) + ',' +  str(packetSize) + ',' + str(frequencyDict[key]['protocol']) +',' + str(frequencyDict[key]['avgTimeInterval'] ) +',' + str(time )+',' + str(frequencyDict[key]['numberPacketsIn']/time )  + '\n'
         # print(toWrite)
         fileToWrite.write(toWrite)
     # fileToWrite.write(str(round(1/avgRequestInterval, 2))+','+str(maxPacketsIn)  +','+str(maxPacketsOut)+','+str(ratioPackets)+',' + str(packetSize) +',' + str(src) +',' + str(dst) + '\n')
 
-f.write('label, filename, nodePair, NumberPacketsIn, NumberPacketsOut, Payload Length, protocol, avgTimeInterval\n')
-f1.write('label, filename, nodePair,  NumberPacketsIn, NumberPacketsOut, Payload Length, protocol, avgTimeInterval\n')
+f.write('label, filename, nodePair, NumberPacketsIn, NumberPacketsOut, Payload Length, protocol, avgTimeInterval, totalFlowTime, bwdps\n')
+f1.write('label, filename, nodePair,  NumberPacketsIn, NumberPacketsOut, Payload Length, protocol, avgTimeInterval, totalFlowTime, bwdps\n')
 def benignExec():
     global startTime, counter, ipDdos, udpDdos, icmpDdos, tcpDdos, prevTime,avgRequestInterval,frequencyDict, nFiles, fileName, label
     label = '0'
